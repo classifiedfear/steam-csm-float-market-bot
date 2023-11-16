@@ -6,6 +6,8 @@ from typing import AsyncGenerator, Tuple, AsyncIterable
 from operator import itemgetter
 from decimal import Decimal, localcontext
 
+from selenium.common import NoSuchElementException
+
 from telegram_bot.resources.parser_factory import Parser, ParserInterface
 
 
@@ -27,6 +29,7 @@ class MatchingDataGetter(metaclass=abc.ABCMeta):
         parser_site_1_task = await parser_site_1.run()
         if not parser_site_1_task:
             return
+
         parser_site_2_task = await parser_site_2.run()
 
         async for matched_skin in self._get_matched_data(parser_site_1_task, parser_site_2_task):

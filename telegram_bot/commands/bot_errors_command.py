@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     TimeoutException,
-    NoSuchWindowException
+    NoSuchWindowException, NoSuchElementException
 )
 
 from telegram_bot.resources.bot_buttons import BotButtons
@@ -44,28 +44,29 @@ class ErrorsHandlerCommand(BotCommand):
 
     async def execute(self):
         await self.state.clear()
-        match self.error:
-            case TimeoutException():
-                await self.message.answer(
-                    user_msg.timeout_exception_error_text, reply_markup=self.buttons.main_keyboard
-                )
-                return True
-            case (ElementClickInterceptedException(), NoSuchWindowException(), TechError()):
-                await self.message.answer(user_msg.tech_error_text, reply_markup=self.buttons.main_keyboard)
-                return True
-            case StatTrakError():
-                await self.message.answer(user_msg.stattrak_error_text, reply_markup=self.buttons.main_keyboard)
-                return True
-            case RequestError():
-                await self.message.answer(user_msg.request_error_text, reply_markup=self.buttons.main_keyboard)
-                return True
-            case InvalidWeapon():
-                await self.message.answer(user_msg.invalidweapon_error_text, reply_markup=self.buttons.main_keyboard)
-                return True
-            case InvalidSkin():
-                await self.message.answer(user_msg.invalid_skin_error_text, reply_markup=self.buttons.main_keyboard)
-                return True
-            case InvalidName():
-                await self.message.answer(user_msg.invalid_name_error_text, reply_markup=self.buttons.main_keyboard)
-                return True
+        if isinstance(self.error, TimeoutException):
+            await self.message.answer(
+                user_msg.timeout_exception_error_text, reply_markup=self.buttons.main_keyboard
+            )
+            return True
+        if isinstance(
+                self.error, (ElementClickInterceptedException, NoSuchWindowException, TechError, NoSuchElementException)
+        ):
+            await self.message.answer(user_msg.tech_error_text, reply_markup=self.buttons.main_keyboard)
+            return True
+        if isinstance(self.error, StatTrakError):
+            await self.message.answer(user_msg.stattrak_error_text, reply_markup=self.buttons.main_keyboard)
+            return True
+        if isinstance(self.error, RequestError):
+            await self.message.answer(user_msg.request_error_text, reply_markup=self.buttons.main_keyboard)
+            return True
+        if isinstance(self.error, InvalidWeapon):
+            await self.message.answer(user_msg.invalidweapon_error_text, reply_markup=self.buttons.main_keyboard)
+            return True
+        if isinstance(self.error, InvalidSkin):
+            await self.message.answer(user_msg.invalid_skin_error_text, reply_markup=self.buttons.main_keyboard)
+            return True
+        if isinstance(self.error, InvalidName):
+            await self.message.answer(user_msg.invalid_name_error_text, reply_markup=self.buttons.main_keyboard)
+            return True
 

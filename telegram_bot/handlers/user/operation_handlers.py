@@ -26,7 +26,6 @@ class OperationHandler(Handler):
             bot: Bot,
             buttons: BotButtons,
             scheduler: AsyncScheduler,
-            states: deque,
             redis: Redis
     ):
         self.buttons = buttons
@@ -34,7 +33,6 @@ class OperationHandler(Handler):
         self.scheduler = scheduler
         self.bot = bot
         self.matched_skins_queue = deque()
-        self.states = states
 
     def _init_router(self, redis: Redis):
         self._router = Router()
@@ -51,18 +49,21 @@ class OperationHandler(Handler):
         @self._router.message(F.text == 'Показати список скінів доступних в базі')
         async def selected_show_skins_in_db(message: Message) -> None:
             text = ''
-            for item in await get_all_skin_from_db(get_session_maker(ENGINE)):
-                weapon, skin = item
-                text += f'{weapon}, {skin}'
-                text += '\n'
-            await message.answer(text)
+            if item := await get_all_skin_from_db(get_session_maker(ENGINE)):
+                for data in item:
+                    weapon, skin = data
+                    text += f'{weapon}, {skin}'
+                    text += '\n'
+                await message.answer(text)
+            else:
+                await message.answer('В базі немає данних.')
 
         @self._router.message(F.text == tg_const.button_find_skins_text)
         async def selected_find_skins_by_db(message: Message, state: FSMContext) -> None:
             await state.set_state(OperationStates.find_skin_by_db_state)
             await message.answer(
                 'Почати пошук по базі данних?',
-                reply_markup=self.buttons.on_off_keyboard
+                reply_markup=self.buttons.create_keyboard([tg_const.on, tg_const.off, 'Повернутись до головного меню'])
             )
 
         @self._router.message(
@@ -100,7 +101,7 @@ class OperationHandler(Handler):
             await state.set_state(OperationStates.add_new_skin_by_db)
             await message.answer(
                 user_msg.find_skin_button_desc,
-                reply_markup=self.buttons.create_keyboard(tg_const.back_button_txt)
+                reply_markup=self.buttons.create_keyboard('Повернутись до головного меню')
             )
 
         @self._router.message(
@@ -133,7 +134,7 @@ class OperationHandler(Handler):
             await state.set_state(OperationStates.find_skin_by_msg_state)
             await message.answer(
                 user_msg.find_skin_button_desc,
-                reply_markup=self.buttons.create_keyboard(tg_const.back_button_txt)
+                reply_markup=self.buttons.create_keyboard('Повернутись до головного меню')
             )
 
         @self._router.message(

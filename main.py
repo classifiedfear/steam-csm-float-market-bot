@@ -24,22 +24,20 @@ class Application:
         self.redis = aioredis.Redis()
         self.dp = Dispatcher(storage=RedisStorage(self.redis))
         self.bot = Bot(token=os.getenv('token'), parse_mode=ParseMode.HTML)
-        self.states = deque()
 
     async def __init_db(self) -> None:
-        #await drop_all_tables(ENGINE)
+        await drop_all_tables(ENGINE)
         await proceed_schemas(ENGINE)
 
     async def __init_handlers(self, scheduler: AsyncScheduler) -> None:
         self.general_handler = GeneralHandler()
         self.general_handler.add(OperationHandler(
-            self.bot, self.buttons, scheduler, self.states,
-            redis=self.redis)).add(
+            self.bot, self.buttons, scheduler, redis=self.redis)).add(
             OtherHandler(
-                self.buttons, self.states)).add(
+                self.buttons)).add(
             CommandHandler(
                 self.redis, self.buttons)).add(
-            SettingHandler(self.buttons, self.redis, self.states)
+            SettingHandler(self.buttons, self.redis)
         )
         await self.general_handler.execute()
 

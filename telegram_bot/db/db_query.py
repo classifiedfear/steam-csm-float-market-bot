@@ -128,7 +128,8 @@ async def add_new_skin_to_db(
                 insert(Weapon).values(weapon_name=weapon_name).returning(Weapon)
             )
         skin_weapons = await skin.awaitable_attrs.weapons
-        skin_weapons.append(weapon)
+        if weapon not in skin_weapons:
+            skin_weapons.append(weapon)
 
         stattrak = await _select_obj_with_attrs(
             session, StatTrak, 'stattrak_status', stattrak_status
@@ -138,7 +139,8 @@ async def add_new_skin_to_db(
                 insert(StatTrak).values(stattrak_status=stattrak_status).returning(StatTrak)
             )
         skin_stattraks = await skin.awaitable_attrs.stattraks
-        skin_stattraks.append(stattrak)
+        if stattrak not in skin_stattraks:
+            skin_stattraks.append(stattrak)
 
         for item in quality_data:
             quality = await _select_obj_with_attrs(session, Quality, 'quality_title', item)
@@ -147,7 +149,8 @@ async def add_new_skin_to_db(
                     insert(Quality).values(quality_title=item).returning(Quality),
                 )
             skin_qualities = await skin.awaitable_attrs.qualities
-            skin_qualities.append(quality)
+            if quality not in skin_qualities:
+                skin_qualities.append(quality)
 
         await session.commit()
 

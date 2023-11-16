@@ -28,7 +28,6 @@ async def test_should_get_data_selenium_steam_data_provider(parser):
     print(count)
 
 
-
 @pytest.mark.asyncio
 async def test_should_get_data_csm_wiki_parser(parser):
     csm_wiki_parser = parser('csm_wiki')

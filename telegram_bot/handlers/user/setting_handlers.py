@@ -15,13 +15,12 @@ from telegram_bot.resources.misc import SettingStates
 
 
 class SettingHandler(Handler):
-    def __init__(self, buttons: BotButtons, redis: Redis, states: deque):
+    def __init__(self, buttons: BotButtons, redis: Redis):
         self._handlers = set()
         self.buttons = buttons
         self._router = Router()
         self.redis = redis
         self._router.message.middleware(SettingsCheck(self.redis))
-        self.states = states
 
     async def execute(self) -> None:
         await self._register_handlers()
@@ -34,7 +33,6 @@ class SettingHandler(Handler):
                 message: Message, state: FSMContext, stattrak: bool, quality: str, search: bool
         ) -> None:
             await state.set_state(SettingStates.choosing_settings_state)
-            self.states.append((SettingStates.choosing_settings_state, self.buttons.settings_keyboard))
             await message.answer(
                 tg_const.settings_msg.format(
                     "".join(item[0] for item in zip(settings.Qualities.UKR.value, settings.Qualities.ENG.value)
@@ -47,11 +45,11 @@ class SettingHandler(Handler):
 
         @self._router.message(
             SettingStates.choosing_settings_state,
-            F.text.in_({
+            lambda message: message.text in {
                 tg_const.quality_msg_settings,
                 tg_const.stattrak_msg_settings,
                 tg_const.search_db_msg_settings
-            })
+            } and message.text != 'Повернутись до головного меню'
         )
         async def choosing_a_certain_one_setting(message: Message, state: FSMContext) -> None:
             setting_state = None
@@ -73,12 +71,11 @@ class SettingHandler(Handler):
                     msg = user_msg.choose_default_stattrak_msg
 
             await state.set_state(setting_state)
-            self.states.append((setting_state, markup))
             await message.answer(msg, reply_markup=markup)
 
         @self._router.message(
             SettingStates.choosing_stattrak_state,
-            F.text.in_({tg_const.on, tg_const.off, tg_const.back_button_txt}),
+            lambda message: message.text in {tg_const.on, tg_const.off} and message.text != tg_const.back_button_txt
         )
         async def set_stattrak_status(message: Message, state: FSMContext) -> None:
             if message.text != tg_const.back_button_txt:
@@ -97,7 +94,7 @@ class SettingHandler(Handler):
 
         @self._router.message(
             SettingStates.choosing_search_state,
-            F.text.in_({tg_const.on, tg_const.off, tg_const.back_button_txt}),
+            lambda message: message.text in {tg_const.on, tg_const.off} and message.text != tg_const.back_button_txt
         )
         async def set_search_by_db_after_user_searching(message: Message, state: FSMContext) -> None:
             if message.text != tg_const.back_button_txt:
@@ -116,10 +113,10 @@ class SettingHandler(Handler):
 
         @self._router.message(
             SettingStates.choosing_quality_state,
-            F.text.in_([
-                           f'{key} ({value})' for key, value in
-                           zip(settings.Qualities.UKR.value, settings.Qualities.ENG.value)
-                       ] + [tg_const.back_button_txt]),
+            lambda message: message.text in {
+               f'{key} ({value})' for key, value in
+               zip(settings.Qualities.UKR.value, settings.Qualities.ENG.value)
+            } and message.text != tg_const.back_button_txt,
         )
         async def set_quality(message: Message, state: FSMContext) -> None:
             if message.text != tg_const.back_button_txt:

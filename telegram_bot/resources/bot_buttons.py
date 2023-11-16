@@ -20,7 +20,7 @@ class BotButtons:
                 tg_const.search_db_msg_settings,
                 tg_const.stattrak_msg_settings,
                 tg_const.quality_msg_settings,
-                tg_const.back_button_txt
+                'Повернутись до головного меню'
             ]
             )
         self.on_off_keyboard = self.create_keyboard(
